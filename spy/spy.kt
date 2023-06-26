@@ -7,6 +7,10 @@
 import java.net.SocketException
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.net.Inet4Address;
+
 
 import java.io.InputStream
 import java.io.OutputStream
@@ -50,6 +54,27 @@ fun getNextLog() : Int {
     }
 }
 
+public val localInetAddress = getAddress()
+
+private fun getAddress() : InetAddress {
+    for (ne in NetworkInterface.getNetworkInterfaces()) {
+        for (ie in ne.getInetAddresses()) {
+            if (!ie.isLoopbackAddress() && ie is Inet4Address) {
+                return ie;
+            }
+        }
+    }
+    for (ne in NetworkInterface.getNetworkInterfaces()) {
+        for (ie in ne.getInetAddresses()) {
+            if (!ie.isLoopbackAddress()) {
+                return ie;
+            }
+        }
+    }
+    return InetAddress.getLocalHost()
+}
+
+
 class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
 
     public fun start() {
@@ -57,7 +82,8 @@ class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
     }
 
     private fun acceptConnections() {
-        print("accepting connections on $inPort\n");
+        print("accepting connections on ${localInetAddress.hostAddress} " +
+		"port $inPort\n");
 	val ss = ServerSocket(inPort);
 	while(true) {
 	    val s = ss.accept();
@@ -94,8 +120,10 @@ class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
 		output.write(content);
 		output.flush();
 	    }
+	} catch (e : Exception) {
+	}
+	try {
 	    output.close();
-	    input.close();
 	} catch (e : Exception) {
 	}
     }
