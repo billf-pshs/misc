@@ -47,10 +47,17 @@ fun usage() {
 
 val lock = ReentrantLock();
 var nextLogVal : Int = 1000;
+var nextRequestVal : Int = 100;
 
 fun getNextLog() : Int {
     lock.withLock {
 	return nextLogVal++;
+    }
+}
+
+fun getNextRequest() : Int {
+    lock.withLock {
+	return nextRequestVal++;
     }
 }
 
@@ -92,19 +99,21 @@ class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
     }
 
     private fun proxyConnection(src : Socket) {
+        val requestNumber = getNextRequest();
+        print("Request $requestNumber received.\n");
 	val dest = Socket(outAddress, outPort);
 	Thread({
-	    copyStream("Outgoing", 
+	    copyStream(requestNumber, "Outgoing", 
 		    src.getInputStream(), dest.getOutputStream());
 	}).start();
 	Thread({
-	    copyStream("Incoming", 
+	    copyStream(requestNumber, "Incoming", 
 		    dest.getInputStream(), src.getOutputStream());
 	}).start();
     }
 
-    private fun copyStream(kind: String, input: InputStream, 
-	    output: OutputStream) {
+    private fun copyStream(requestNumber: Int, kind: String, 
+            input: InputStream, output: OutputStream) {
 	val buf = ByteArray(65536);
 	try {
 	    while (true) {
@@ -115,7 +124,7 @@ class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
 		val log = getNextLog();
 		val content = buf.sliceArray(0..(n-1));
 		if (saveLogs) {
-		    File("log.$log.$kind.$inPort").writeBytes(content);
+		    File("log.$requestNumber.$log.$kind.$inPort").writeBytes(content);
 		}
 		output.write(content);
 		output.flush();
