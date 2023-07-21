@@ -1,5 +1,5 @@
 //
-// A simple hack proxy server that allows lopgging.  See usage()
+// A simple hack proxy server that allows logging.  See usage()
 //
 // Bill foote, 6/23/23
 //
