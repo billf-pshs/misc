@@ -94,7 +94,11 @@ class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
 	val ss = ServerSocket(inPort);
 	while(true) {
 	    val s = ss.accept();
-	    proxyConnection(s);
+            try {
+                proxyConnection(s);
+            } catch (t : Throwable) {
+                print("Ignoring error:  $t\n");
+            }
 	}
     }
 
@@ -114,8 +118,8 @@ class Spy(val inPort: Int, val outAddress: String, val outPort: Int)  {
 
     private fun copyStream(requestNumber: Int, kind: String, 
             input: InputStream, output: OutputStream) {
-	val buf = ByteArray(65536);
 	try {
+            val buf = ByteArray(65536);
 	    while (true) {
 		val n = input.read(buf);
 		if (n == -1) {
